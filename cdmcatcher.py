@@ -75,11 +75,6 @@ def print_dictionary(**kwargs):
     for key, value in kwargs.items():
         print(key + ": " + str(value))
 
-def verify_filename(filename):
-    if not filename.endswith(('.json', '.xml')):
-        raise argparse.ArgumentTypeError('Filename must have a .xml or .json extension.')
-    return filename
-
 def main(args):
     catcher = Client(CATCHERURL)
     functionName = args.action
