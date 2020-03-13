@@ -29,25 +29,25 @@ def getArgs():
     
     # Collection parser
     collection_parser = subparsers.add_parser("collections", help="Return the collection fields and their attributes")
-    collection_parser.add_argument("alias", help="The alias of the collection configuration you want returned.")
+    collection_parser.add_argument("collection", help="The alias of the collection configuration you want returned.")
     
     # Add parser
     process_add_parser = subparsers.add_parser("add", help="Add metadata.")
     process_add_parser.add_argument("filepath", action=ValidateFile, help="XML or JSON filepath with metadata to add.")
-    process_add_parser.add_argument("alias", help="The alias of the collection to modify.")
+    process_add_parser.add_argument("collection", help="The alias of the collection to modify.")
 
     # Delete parser
     process_delete_parser = subparsers.add_parser("delete", help="Add metadata.")
     process_delete_parser.add_argument("filepath", action=ValidateFile, help="XML or JSON filepath with metadata to delete.")
+    process_delete_parser.add_argument("collection", help="The alias of the collection to modify.")
     
     # Edit parser
     process_edit_parser = subparsers.add_parser("edit", help="Add metadata.")
     process_edit_parser.add_argument("filepath", action=ValidateFile, help="XML or JSON filepath with metadata transformations to apply.")
-    process_edit_parser.add_argument("alias", help="The alias of the collection to modify.")
-    process_edit_parser.add_argument("field", nargs="+", help="The field(s) with the controlled vocabulary applied.")
+    process_edit_parser.add_argument("collection", help="The alias of the collection to modify.")
 
     # Vocabulary parser
-    vocab_parser = subparsers.add_parser("terms", help="Return controlled vocabulary terms for selected collection.")
+    vocab_parser = subparsers.add_parser("vocab", help="Return controlled vocabulary terms for selected collection.")
     vocab_parser.add_argument("collection", help="The alias of the collection to return.")
     vocab_parser.add_argument("field", help="The field with the controlled vocabulary applied.")
     
