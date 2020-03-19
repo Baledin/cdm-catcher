@@ -1,7 +1,7 @@
 import argparse
 import requests
 import json
-import xmltodict
+import xml.etree.ElementTree as xTree
 from zeep import Client
 from config import cdm
 import os
@@ -129,14 +129,28 @@ class FileProcessor(argparse.Action):
         self.contents = getattr(self, parser)(self.filepath)
 
     def parse_json(self, filepath):
+        # Parses json, returns list of dictionaries
         print("Parsing json")
         with open(filepath, "r") as f:
             return json.load(f)
     
     def parse_xml(self, filepath):
+        # Parses xml, returns list of dictionaries
         print("Parsing xml")
-        with open(filepath, "r") as f:
-            return xmltodict.parse(f.read())
+        xml = xTree.parse(filepath).getroot()
+        result = []
+        for record in xml:
+            # Check for valid xml structure
+            if not record.tag == "record":
+                quit("Invalid XML, please refer to documentation.")
+            
+            # iterate through elements, add to record dictionary
+            item = {}
+            for elem in record:
+                item[elem.tag] = elem.text
+            
+            result.append(item)
 
+        return result
 
 main(get_args())
