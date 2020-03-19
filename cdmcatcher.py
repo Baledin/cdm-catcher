@@ -1,6 +1,7 @@
 import argparse
 import requests
 import json
+import pprint
 import xml.etree.ElementTree as xTree
 from zeep import Client
 from config import cdm
@@ -84,12 +85,13 @@ def main(args):
     if(args.version):
         print("Catcher version: " + catcher.service.getWSVersion())
 
-    #result = getattr(self, functionName)
+    if(args.filepath):
+        pp = pprint.PrettyPrinter(indent = 4)
+        pp.pprint(args.filepath.get_contents())
+    else:
+        print("False")
 
-    #result = eval("catcher.service." + functionName + "(" + functions[functionName]() + ")")
     #output(result, filename=functionName + ".xml")
-    # print(args)
-    # print_dictionary(**get_params(vars(args)))
 
 # Matches program argument with Catcher function:
 functions = {
@@ -117,9 +119,8 @@ class FileProcessor(argparse.Action):
             parser.error("File does not exist.")
 
         self.set_contents()
-        print(self.get_contents())
         
-        setattr(namespace, self.dest, self.filepath)
+        setattr(namespace, self.dest, self)
     
     def get_contents(self):
         return self.contents
@@ -130,13 +131,11 @@ class FileProcessor(argparse.Action):
 
     def parse_json(self, filepath):
         # Parses json, returns list of dictionaries
-        print("Parsing json")
         with open(filepath, "r") as f:
             return json.load(f)
     
     def parse_xml(self, filepath):
         # Parses xml, returns list of dictionaries
-        print("Parsing xml")
         xml = xTree.parse(filepath).getroot()
         result = []
         for record in xml:
