@@ -1,7 +1,6 @@
 import argparse
 import requests
 import json
-import xml.etree.ElementTree as xtree
 import xmltodict
 from zeep import Client
 from config import cdm
@@ -89,8 +88,8 @@ def main(args):
 
     #result = eval("catcher.service." + functionName + "(" + functions[functionName]() + ")")
     #output(result, filename=functionName + ".xml")
-    print(args)
-    print_dictionary(**get_params(vars(args)))
+    # print(args)
+    # print_dictionary(**get_params(vars(args)))
 
 # Matches program argument with Catcher function:
 functions = {
@@ -106,7 +105,7 @@ class FileProcessor(argparse.Action):
     ALLOWABLE_EXTENSIONS = ('json', 'xml')
     filepath = ''
     extension = ''
-    file_contents = {}
+    contents = {}
 
     def __call__(self, parser, namespace, filepath, option_string=None):
         self.filepath = filepath
@@ -116,24 +115,28 @@ class FileProcessor(argparse.Action):
             parser.error("Filename must have a .xml or .json extension.")
         if not os.path.exists(filepath):
             parser.error("File does not exist.")
+
+        self.set_contents()
+        print(self.get_contents())
         
         setattr(namespace, self.dest, self.filepath)
     
-    def get_file_contents(self):
-        return self.file_contents
+    def get_contents(self):
+        return self.contents
 
-    def set_file_contents(self):
+    def set_contents(self):
         parser = "parse_" + self.extension
-        self.file_contents = getattr(self, parser)
+        self.contents = getattr(self, parser)(self.filepath)
 
-
-    def parse_json(self):
-        with open(self.filepath) as f:
+    def parse_json(self, filepath):
+        print("Parsing json")
+        with open(filepath, "r") as f:
             return json.load(f)
     
-    def parse_xml(self):
-        with open(self.filepath) as f:
-            return f.test
+    def parse_xml(self, filepath):
+        print("Parsing xml")
+        with open(filepath, "r") as f:
+            return xmltodict.parse(f.read())
 
 
 main(get_args())
