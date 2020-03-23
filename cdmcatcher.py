@@ -1,5 +1,4 @@
 import argparse
-import requests
 import json
 import pprint
 import xml.etree.ElementTree as xTree
@@ -29,35 +28,30 @@ def get_args():
     subparsers.add_parser("catalog", help="Return a list of collections from a CONTENTdm Server.")
     
     # Collection parser
-    collection_parser = subparsers.add_parser("collections", help="Return the collection fields and their attributes")
-    collection_parser.add_argument("collection", help="The alias of the collection configuration you want returned.")
+    collection_parser = subparsers.add_parser("collection", help="Return the collection fields and their attributes")
+    collection_parser.add_argument("alias", help="The alias of the collection configuration you want returned.")
     
     # Add parser
     process_add_parser = subparsers.add_parser("add", help="Add metadata.")
-    process_add_parser.add_argument("collection", help="The alias of the collection to modify.")
+    process_add_parser.add_argument("alias", help="The alias of the collection to modify.")
     process_add_parser.add_argument("filepath", action=Catcher.FileProcessor, help="XML or JSON filepath with metadata to add.")
 
     # Delete parser
     process_delete_parser = subparsers.add_parser("delete", help="Add metadata.")
-    process_delete_parser.add_argument("collection", help="The alias of the collection to modify.")
+    process_delete_parser.add_argument("alias", help="The alias of the collection to modify.")
     process_delete_parser.add_argument("filepath", action=Catcher.FileProcessor, help="XML or JSON filepath with metadata to delete.")
     
     # Edit parser
     process_edit_parser = subparsers.add_parser("edit", help="Add metadata.")
-    process_edit_parser.add_argument("collection", help="The alias of the collection to modify.")
+    process_edit_parser.add_argument("alias", help="The alias of the collection to modify.")
     process_edit_parser.add_argument("filepath", action=Catcher.FileProcessor, help="XML or JSON filepath with metadata transformations to apply.")
 
     # Vocabulary parser
-    vocab_parser = subparsers.add_parser("vocab", help="Return controlled vocabulary terms for selected collection.")
-    vocab_parser.add_argument("collection", help="The alias of the collection to return.")
-    vocab_parser.add_argument("field", help="The field with the controlled vocabulary applied.")
+    vocab_parser = subparsers.add_parser("terms", help="Return controlled vocabulary terms for selected collection.")
+    vocab_parser.add_argument("alias", help="The alias of the collection to return.")
+    vocab_parser.add_argument("field", help="The field with the controlled vocabulary to return.")
     
     return parser.parse_args()
-
-def main(args):
-    Catcher(args).process()
-
-    #output(result, filename=functionName + ".xml")
 
 class Catcher:
     # Matches program argument with Catcher function:
@@ -71,65 +65,75 @@ class Catcher:
     }
 
     def __init__(self, args):
+        self.args = vars(args)
         self.catcher = Client(CATCHERURL)
-        self.function = Catcher.AVAILABLE_FUNCTIONS[args.action]
-        self.args = args
+        self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
 
-        if(args.version):
+        if(self.args['version']):
             print("Catcher version: " + self.catcher.service.getWSVersion())
 
-    def output(self, body, filename='output.xml'):
-        with open(filename, "w+") as f:
-            f.write(body)
+    def output(self, body, filename='output.xml', mode="w"):
+        with open(filename, mode) as f:
+            if not mode[0] == "r":
+                f.write(body)
+                if mode[0] == "a":
+                    f.write("\n\n")
             f.close()
 
     def get_params(self, metadata = None):
         valid_actions = [ 'add', 'delete', 'edit' ]
         params = { **config }
-        try:
-            # Add line item arguments if provided
-            for key, value in self.args.items():
-                if(key == 'version') or (key == 'filepath'):
-                    continue
-                elif (key == 'action') and not (value in valid_actions):
-                    continue
-                else:
-                    params[key] = value
-            
-            if not metadata == None:
-                params['metadata']['metadatalist'] = metadata
-        except:
-            pass
+
+        # Add line item arguments if provided
+        for key, value in self.args.items():
+            if(key == 'version') or (key == 'filepath'):
+                continue
+            elif (key == 'action') and not (value in valid_actions):
+                continue
+            elif (key == 'alias'):
+                # alias is known to Catcher by collection, ensure preceeding slash
+                alias = value
+                if not alias[0] == "/":
+                    alias = "/" + alias
+                params['collection'] = alias
+            else:
+                params[key] = value
+        
+        if not metadata == None:
+            params['metadata'] = {'metadataList' : metadata }
+        
         return params
     
     def process(self):
-        # Process multiple passes if file with metadata is being processed
-        try:
-            contents = self.args.filepath.get_contents()
+        # Processes multiple passes if file with metadata is being processed or just once for no metadata
+        if 'filepath' in self.args:
+            contents = self.args['filepath'].get_contents()
             for item in contents:
                 metadata = []
                 for key, value in item.items():
-                    metadata.append({'field' : key, 'value' : value})
+                    metadata.append({'metadata' : {'field' : key, 'value' : value}})
                 
                 getattr(self, self.function)(self.get_params(metadata))
-        except:
+        else:
             getattr(self, self.function)(self.get_params())
+            
     
-    #TODO replace below methods with direct calls to Catcher
     def getCONTENTdmCatalog(self, params):
-        self.output(self.catcher.service.getCONTENTdmCatalog(**params), "catalog.xml")
+        self.output(self.catcher.service.getCONTENTdmCatalog(**params), "Catalog.xml")
     
     def getCONTENTdmCollectionConfig(self, params):
-        print("getCONTENTdmCollectionConfig")
-        print(params)
+        filename = "Collection_" + params['collection'].replace('/','')
+        self.output(self.catcher.service.getCONTENTdmCollectionConfig(**params), filename + ".xml")
     
     def getCONTENTdmControlledVocabTerms(self, params):
-        print("getCONTENTdmControlledVocabTerms")
-        print(params)
+        filename = "Vocabulary_" + params['collection'].replace('/','')
+        self.output(self.catcher.service.getCONTENTdmControlledVocabTerms(**params), filename + ".xml")
 
     def processCONTENTdm(self, params):
-        print("processCONTENTdm")
-        print(params)
+        filename = "Process_" + params['action'] + "_" + params['collection'].replace('/','') + ".xml"
+        self.output(params['action'] + " record | Field: " + params['metadata']['metadataList'][0]['metadata']['field'] + " | Value: " + params['metadata']['metadataList'][0]['metadata']['value'], filename, "a")
+        breakpoint()
+        self.output(self.catcher.service.processCONTENTdm(**params), filename, "a")
 
     class FileProcessor(argparse.Action):
         ALLOWABLE_EXTENSIONS = ('json', 'xml')
@@ -181,4 +185,4 @@ class Catcher:
             return result
 
 if __name__ == "__main__":
-    main(get_args())
+    Catcher(get_args()).process()
