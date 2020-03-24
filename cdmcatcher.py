@@ -1,7 +1,8 @@
 import argparse
+from datetime import datetime
 import json
 import pprint
-import xml.etree.ElementTree as xTree
+import lxml.etree as xTree
 from zeep import Client
 from config import cdm
 import os
@@ -130,9 +131,11 @@ class Catcher:
         self.output(self.catcher.service.getCONTENTdmControlledVocabTerms(**params), filename + ".xml")
 
     def processCONTENTdm(self, params):
-        filename = "Process_" + params['action'] + "_" + params['collection'].replace('/','') + ".xml"
-        self.output(params['action'] + " record | Field: " + params['metadata']['metadataList'][0]['metadata']['field'] + " | Value: " + params['metadata']['metadataList'][0]['metadata']['value'], filename, "a")
-        breakpoint()
+        filename = "Process_" + params['action'] + "_" + params['collection'].replace('/','') + ".txt"
+        timestamp = "******** " + str(datetime.now()) + " ********"
+        #breakpoint()
+        self.output(timestamp, filename, "a")
+        self.output(params['action'] + " record | Field: " + params['metadata']['metadataList']['metadata'][0]['field'] + " | Value: " + params['metadata']['metadataList']['metadata'][0]['value'], filename, "a")
         self.output(self.catcher.service.processCONTENTdm(**params), filename, "a")
 
     class FileProcessor(argparse.Action):
