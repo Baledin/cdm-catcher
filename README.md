@@ -13,5 +13,6 @@ Rename `config-dist.py` to `config.py` and update contents with the following:
 
 ## TO-DO
 
-- Implement command line arguments, script usage is currently hard-coded for testing
-- Build input parser (JSON/XML) for add/edit/delete
+- processCONTENTdm add/edit are not performing as expected. Delete command works as intended and removes the resultant record from CONTENTdm after re-indexing
+- Provide samples input files
+- Flesh out README with command-line argument details
