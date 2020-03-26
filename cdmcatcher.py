@@ -1,11 +1,10 @@
 import argparse
+from config import cdm
 from datetime import datetime
 import json
-import pprint
 import lxml.etree as xTree
-from zeep import Client
-from config import cdm
 import os
+import zeep
 
 CATCHERURL = "https://worldcat.org/webservices/contentdm/catcher/6.0/CatcherService.wsdl"
 
@@ -67,7 +66,7 @@ class Catcher:
 
     def __init__(self, args):
         self.args = vars(args)
-        self.catcher = Client(CATCHERURL)
+        self.catcher = zeep.Client(CATCHERURL)
         self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
 
         if(self.args['version']):
@@ -76,7 +75,7 @@ class Catcher:
     def output(self, body, filename='output.xml', mode="w"):
         with open(filename, mode) as f:
             if not mode[0] == "r":
-                f.write(body)
+                f.write(str(body))
                 if mode[0] == "a":
                     f.write("\n\n")
             f.close()
@@ -133,9 +132,7 @@ class Catcher:
     def processCONTENTdm(self, params):
         filename = "Process_" + params['action'] + "_" + params['collection'].replace('/','') + ".txt"
         timestamp = "******** " + str(datetime.now()) + " ********"
-        #breakpoint()
         self.output(timestamp, filename, "a")
-        self.output(params['action'] + " record | Field: " + params['metadata']['metadataList']['metadata'][0]['field'] + " | Value: " + params['metadata']['metadataList']['metadata'][0]['value'], filename, "a")
         self.output(self.catcher.service.processCONTENTdm(**params), filename, "a")
 
     class FileProcessor(argparse.Action):
