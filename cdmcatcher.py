@@ -5,8 +5,6 @@ import lxml.etree as xTree
 import os
 import zeep
 
-CATCHERURL = "https://worldcat.org/webservices/contentdm/catcher/6.0/CatcherService.wsdl"
-
 def get_args():
     parser = argparse.ArgumentParser(description="%(prog)s is a python helper script for interacting with the CONTENTdm Catcher SOAP service.")
     
@@ -56,10 +54,12 @@ class Catcher:
         'edit'      : 'processCONTENTdm'
     }
 
+    CATCHERURL = "https://worldcat.org/webservices/contentdm/catcher/6.0/CatcherService.wsdl"
+
     def __init__(self, config, args):
         self.config = config
         self.args = vars(args)
-        self.catcher = zeep.Client(CATCHERURL)
+        self.catcher = zeep.Client(Catcher.CATCHERURL)
         self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
 
         if(self.args['version']):
