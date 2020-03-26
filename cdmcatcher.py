@@ -123,22 +123,59 @@ class Catcher:
             
     
     def getCONTENTdmCatalog(self, params):
-        self.output(self.catcher.service.getCONTENTdmCatalog(**params), "Catalog.xml")
+        self.output(
+            self.catcher.service.getCONTENTdmCatalog(
+                cdmurl=params['cdmurl'],
+                username=params['username'],
+                password=params['password'],
+                license=params['license']
+            ),
+            "Catalog.xml"
+        )
     
     def getCONTENTdmCollectionConfig(self, params):
         filename = "Collection_" + params['collection'].replace('/','')
-        self.output(self.catcher.service.getCONTENTdmCollectionConfig(**params), filename + ".xml")
+        self.output(
+            self.catcher.service.getCONTENTdmCollectionConfig(
+                cdmurl=params['cdmurl'],
+                username=params['username'],
+                password=params['password'],
+                license=params['license'],
+                collection=params['collection']
+            ),
+            filename + ".xml"
+        )
     
     def getCONTENTdmControlledVocabTerms(self, params):
         filename = "Vocabulary_" + params['collection'].replace('/','')
-        self.output(self.catcher.service.getCONTENTdmControlledVocabTerms(**params), filename + ".xml")
+        self.output(
+            self.catcher.service.getCONTENTdmControlledVocabTerms(
+                cdmurl=params['cdmurl'],
+                username=params['username'],
+                password=params['password'],
+                license=params['license'],
+                collection=params['collection'],
+                field=params['field']
+            ),
+            filename + ".xml"
+        )
 
     def processCONTENTdm(self, params):
         filename = "Process_" + params['action'] + "_" + params['collection'].replace('/','') + ".txt"
         timestamp = "******** " + str(datetime.now()) + " ********"
         self.output(timestamp, filename, "a")
-        self.output(self.catcher.service.processCONTENTdm(**params), filename, "a")
 
+        self.output(
+            self.catcher.service.processCONTENTdm(
+                action=params['action'],
+                cdmurl=params['cdmurl'],
+                username=params['username'],
+                password=params['password'],
+                license=params['license'],
+                collection=params['collection'],
+                metadata=params['metadata']
+            ), filename, "a"
+        )
     class FileProcessor(argparse.Action):
         ALLOWABLE_EXTENSIONS = ('json', 'xml')
         filepath = ''
