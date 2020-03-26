@@ -83,7 +83,6 @@ class Catcher:
     def get_params(self, metadata = None):
         valid_actions = [ 'add', 'delete', 'edit' ]
         params = { **config }
-
         # Add line item arguments if provided
         for key, value in self.args.items():
             if(key == 'version') or (key == 'filepath'):
@@ -100,7 +99,7 @@ class Catcher:
                 params[key] = value
         
         if not metadata == None:
-            params['metadata'] = {'metadataList' : metadata }
+            params['metadata'] = metadata #{'metadataList' : { 'metadata' : metadata } }
         
         return params
     
@@ -108,12 +107,17 @@ class Catcher:
         # Processes multiple passes if file with metadata is being processed or just once for no metadata
         if 'filepath' in self.args:
             contents = self.args['filepath'].get_contents()
+            factory = self.catcher.type_factory('ns0')
             for item in contents:
+                metadatawrapper = factory.metadataWrapper()
+                
                 metadata = []
                 for key, value in item.items():
-                    metadata.append({'metadata' : {'field' : key, 'value' : value}})
+                    metadata.append(factory.metadata(field=key, value=value))
                 
-                getattr(self, self.function)(self.get_params(metadata))
+                metadatawrapper.metadataList = {'metadata' : metadata}
+
+                getattr(self, self.function)(self.get_params(metadatawrapper))
         else:
             getattr(self, self.function)(self.get_params())
             
