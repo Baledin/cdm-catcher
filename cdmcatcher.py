@@ -1,5 +1,4 @@
 import argparse
-from config import cdm
 from datetime import datetime
 import json
 import lxml.etree as xTree
@@ -7,13 +6,6 @@ import os
 import zeep
 
 CATCHERURL = "https://worldcat.org/webservices/contentdm/catcher/6.0/CatcherService.wsdl"
-
-config = {
-    'cdmurl': cdm['url'],
-    'username': cdm['username'],
-    'password': cdm['password'],
-    'license': cdm['license'],
-}
 
 def get_args():
     parser = argparse.ArgumentParser(description="%(prog)s is a python helper script for interacting with the CONTENTdm Catcher SOAP service.")
@@ -64,7 +56,8 @@ class Catcher:
         'edit'      : 'processCONTENTdm'
     }
 
-    def __init__(self, args):
+    def __init__(self, config, args):
+        self.config = config
         self.args = vars(args)
         self.catcher = zeep.Client(CATCHERURL)
         self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
@@ -82,7 +75,7 @@ class Catcher:
 
     def get_params(self, metadata = None):
         valid_actions = [ 'add', 'delete', 'edit' ]
-        params = { **config }
+        params = { **self.config }
         # Add line item arguments if provided
         for key, value in self.args.items():
             if(key == 'version') or (key == 'filepath'):
@@ -226,4 +219,13 @@ class Catcher:
             return result
 
 if __name__ == "__main__":
-    Catcher(get_args()).process()
+    from config import cdm
+    
+    config = {
+        'cdmurl': cdm['url'],
+        'username': cdm['username'],
+        'password': cdm['password'],
+        'license': cdm['license'],
+    }
+    args = get_args()
+    Catcher(config, args).process()
