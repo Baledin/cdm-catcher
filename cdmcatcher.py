@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import lxml.etree as xTree
 import os
+import pprint
 import zeep
 
 def get_args():
@@ -59,7 +60,8 @@ class Catcher:
     def __init__(self, config, args):
         self.config = config
         self.args = vars(args)
-        self.catcher = zeep.Client(Catcher.CATCHERURL)
+        self.settings = zeep.Settings(strict=False)
+        self.catcher = zeep.Client(Catcher.CATCHERURL, settings=self.settings)
         self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
 
         if(self.args['version']):
@@ -109,6 +111,8 @@ class Catcher:
                     metadata.append(factory.metadata(field=key, value=value))
                 
                 metadatawrapper.metadataList = {'metadata' : metadata}
+
+                breakpoint()
 
                 getattr(self, self.function)(self.get_params(metadatawrapper))
         else:
@@ -169,6 +173,22 @@ class Catcher:
                 metadata=params['metadata']
             ), filename, "a"
         )
+
+        node = self.catcher.create_message(
+            self.catcher.service, 
+            self.function, 
+            action=params['action'],
+            cdmurl=params['cdmurl'],
+            username=params['username'],
+            password=params['password'],
+            license=params['license'],
+            collection=params['collection'],
+            metadata=params['metadata']
+        )
+        tree = xTree.ElementTree(node)
+        filename = 'Process_edit_' + params['collection'].replace('/', '') + "_" + datetime.now().strftime('%Y%m%d%H%M%S') + '.xml'
+        tree.write(filename, pretty_print=True)
+    
     class FileProcessor(argparse.Action):
         ALLOWABLE_EXTENSIONS = ('json', 'xml')
         filepath = ''
