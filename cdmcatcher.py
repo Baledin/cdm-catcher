@@ -203,7 +203,7 @@ class Catcher:
         )
         tree = xTree.ElementTree(node)
         filename = 'Process_' + params['action'] + "_" + params['collection'].replace(
-            '/', '') + "_" + datetime.now().strftime('%Y%m%d%H%M%S') + '.xml'
+            '/', '') + "_" + datetime.now().strftime('%Y%m%d%H%M%S.%f') + '.xml'
         tree.write(filename, pretty_print=True)
 
     class FileProcessor(argparse.Action):
