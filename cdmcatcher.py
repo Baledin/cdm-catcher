@@ -12,8 +12,11 @@ def get_args():
         description="%(prog)s is a python helper script for interacting with the CONTENTdm Catcher SOAP service.")
 
     # General arguments
+    # TODO Add additional version calls to string
     parser.add_argument("-v", "--version", action='store_true',
                         help="Returns current %(prog)s, Catcher, and HTTP Transfer versions.")
+    parser.add_argument(
+        "-o", "--output", help="Filename and path for output.")
 
     # Subparsers
     subparsers = parser.add_subparsers(dest="action")
@@ -118,6 +121,7 @@ class Catcher:
 
     def process(self):
         # Processes multiple passes if file with metadata is being processed or just once for no metadata
+        result = ""
         if 'filepath' in self.args:
             contents = self.args['filepath'].get_contents()
             factory = self.catcher.type_factory('ns0')
@@ -130,69 +134,48 @@ class Catcher:
 
                 metadatawrapper.metadataList = {'metadata': metadata}
 
-                getattr(self, self.function)(self.get_params(metadatawrapper))
+                result += getattr(self, self.function)(
+                    self.get_params(metadatawrapper))
         else:
-            getattr(self, self.function)(self.get_params())
+            result = getattr(self, self.function)(self.get_params())
+
+        if not result == "":
+            if self.args.output is None:
+                print(result)
+            else:
+                self.output(result, self.args.output)
 
     def getCONTENTdmCatalog(self, params):
-        self.output(
-            self.catcher.service.getCONTENTdmCatalog(
-                cdmurl=params['cdmurl'],
-                username=params['username'],
-                password=params['password'],
-                license=params['license']
-            ),
-            "Catalog.xml"
+        return self.catcher.service.getCONTENTdmCatalog(
+            cdmurl=params['cdmurl'],
+            username=params['username'],
+            password=params['password'],
+            license=params['license']
         )
 
     def getCONTENTdmCollectionConfig(self, params):
-        filename = "Collection_" + params['collection'].replace('/', '')
-        self.output(
-            self.catcher.service.getCONTENTdmCollectionConfig(
-                cdmurl=params['cdmurl'],
-                username=params['username'],
-                password=params['password'],
-                license=params['license'],
-                collection=params['collection']
-            ),
-            filename + ".xml"
+        return self.catcher.service.getCONTENTdmCollectionConfig(
+            cdmurl=params['cdmurl'],
+            username=params['username'],
+            password=params['password'],
+            license=params['license'],
+            collection=params['collection']
         )
 
     def getCONTENTdmControlledVocabTerms(self, params):
-        filename = "Vocabulary_" + params['collection'].replace('/', '')
-        self.output(
-            self.catcher.service.getCONTENTdmControlledVocabTerms(
-                cdmurl=params['cdmurl'],
-                username=params['username'],
-                password=params['password'],
-                license=params['license'],
-                collection=params['collection'],
-                field=params['field']
-            ),
-            filename + ".xml"
+        return self.catcher.service.getCONTENTdmControlledVocabTerms(
+            cdmurl=params['cdmurl'],
+            username=params['username'],
+            password=params['password'],
+            license=params['license'],
+            collection=params['collection'],
+            field=params['field']
         )
 
     def processCONTENTdm(self, params):
-        filename = "Process_" + params['action'] + "_" + \
-            params['collection'].replace('/', '') + ".txt"
-        timestamp = "******** " + str(datetime.now()) + " ********"
-        self.output(timestamp, filename, "a")
+        result = "******** " + str(datetime.now()) + " ********\n"
 
-        self.output(
-            self.catcher.service.processCONTENTdm(
-                action=params['action'],
-                cdmurl=params['cdmurl'],
-                username=params['username'],
-                password=params['password'],
-                license=params['license'],
-                collection=params['collection'],
-                metadata=params['metadata']
-            ), filename, "a"
-        )
-
-        node = self.catcher.create_message(
-            self.catcher.service,
-            self.function,
+        result += self.catcher.service.processCONTENTdm(
             action=params['action'],
             cdmurl=params['cdmurl'],
             username=params['username'],
@@ -201,10 +184,8 @@ class Catcher:
             collection=params['collection'],
             metadata=params['metadata']
         )
-        tree = xTree.ElementTree(node)
-        filename = 'Process_' + params['action'] + "_" + params['collection'].replace(
-            '/', '') + "_" + datetime.now().strftime('%Y%m%d%H%M%S.%f') + '.xml'
-        tree.write(filename, pretty_print=True)
+        result += "\n"
+        return result
 
     class FileProcessor(argparse.Action):
         ALLOWABLE_EXTENSIONS = ('json', 'xml')
