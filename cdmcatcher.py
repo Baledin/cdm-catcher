@@ -37,6 +37,8 @@ def get_args():
         "alias", help="The alias of the collection to modify.")
     process_add_parser.add_argument(
         "filepath", action=Catcher.FileProcessor, help="XML or JSON filepath with metadata to add.")
+    process_add_parser.add_argument(
+        "-cv", "--vocab", help="Allows the provision of an alternate alias and matching controlled vocabulary for X fields. Used for validating controlled vocabulary fields where the controlled vocabulary has been temporarily disabled.", nargs="+")
 
     # Delete parser
     process_delete_parser = subparsers.add_parser(
@@ -52,6 +54,8 @@ def get_args():
         "alias", help="The alias of the collection to modify.")
     process_edit_parser.add_argument("filepath", action=Catcher.FileProcessor,
                                      help="XML or JSON filepath with metadata transformations to apply.")
+    process_edit_parser.add_argument(
+        "-cv", "--vocab", help="Allows the provision of an alternate alias and matching controlled vocabulary for X fields. Used for validating controlled vocabulary fields where the controlled vocabulary has been temporarily disabled.", nargs="+")
 
     # Vocabulary parser
     vocab_parser = subparsers.add_parser(
@@ -83,14 +87,15 @@ class Catcher:
         self.settings = zeep.Settings(strict=False)
         self.catcher = zeep.Client(Catcher.CATCHERURL, settings=self.settings)
         self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
+        self.vocab = {}
 
         if(self.args['version']):
             print("Catcher version: " + self.catcher.service.getWSVersion())
 
     def output(self, body, filename='output.xml', mode="w"):
-        with open(filename, mode) as f:
+        with open(filename, mode, encoding="utf-8") as f:
             if not mode[0] == "r":
-                f.write(str(body))
+                f.write(body)
                 if mode[0] == "a":
                     f.write("\n\n")
             f.close()
@@ -114,10 +119,14 @@ class Catcher:
                 params[key] = value
 
         if not metadata == None:
-            # { 'metadata' : metadata } }
             params['metadata'] = metadata
 
         return params
+
+    # def init_vocabulary():
+        # Get collection config and iterate, for each field with vocab set to 1, add to self.vocab as key
+        # config = self.getCONTENTdmCollectionConfig()
+        # TODO: Add controlled vocab for alt vocab if self.args.vocab == None:
 
     def process(self):
         # Processes multiple passes if file with metadata is being processed or just once for no metadata
@@ -140,10 +149,10 @@ class Catcher:
             result = getattr(self, self.function)(self.get_params())
 
         if not result == "":
-            if self.args.output is None:
+            if self.args["output"] is None:
                 print(result)
             else:
-                self.output(result, self.args.output)
+                self.output(result, self.args["output"])
 
     def getCONTENTdmCatalog(self, params):
         return self.catcher.service.getCONTENTdmCatalog(
