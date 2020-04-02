@@ -92,45 +92,6 @@ class Catcher:
         if(self.args['version']):
             print("Catcher version: " + self.catcher.service.getWSVersion())
 
-    def output(self, body, filename='output.xml', mode="w"):
-        with open(filename, mode, encoding="utf-8") as f:
-            if not mode[0] == "r":
-                f.write(body)
-                if mode[0] == "a":
-                    f.write("\n\n")
-            f.close()
-
-    # def init_vocabulary():
-    # Get collection config and iterate, for each field with vocab set to 1, add to self.vocab as key
-    # config = self.getCONTENTdmCollectionConfig()
-    # TODO: Add controlled vocab for alt vocab if self.args.vocab == None:
-
-    def process(self):
-        # Processes multiple passes if file with metadata is being processed or just once for no metadata
-        result = ""
-        if 'filepath' in self.args:
-            contents = self.args['filepath'].get_contents()
-            factory = self.catcher.type_factory('ns0')
-            for item in contents:
-                metadatawrapper = factory.metadataWrapper()
-
-                metadata = []
-                for key, value in item.items():
-                    metadata.append(factory.metadata(field=key, value=value))
-
-                metadatawrapper.metadataList = {'metadata': metadata}
-
-                result += getattr(self, self.function)(
-                    self.get_params(metadatawrapper))
-        else:
-            result = getattr(self, self.function)(self.get_params())
-
-        if not result == "":
-            if self.args["output"] is None:
-                print(result)
-            else:
-                self.output(result, self.args["output"])
-
     def get_catalog(self, params):
         return self.catcher.service.getCONTENTdmCatalog(
             cdmurl=params['cdmurl'],
@@ -183,6 +144,11 @@ class Catcher:
             field=params['field']
         )
 
+    # def init_vocabulary():
+    # Get collection config and iterate, for each field with vocab set to 1, add to self.vocab as key
+    # config = self.getCONTENTdmCollectionConfig()
+    # TODO: Add controlled vocab for alt vocab if self.args.vocab == None:
+
     def modify_record(self, params):
         result = "******** " + str(datetime.now()) + " ********\n"
 
@@ -197,6 +163,38 @@ class Catcher:
         )
         result += "\n"
         return result
+
+    def output(self, body, filename='output.xml', mode="w"):
+        with open(filename, mode, encoding="utf-8") as f:
+            if not mode[0] == "r":
+                f.write(body)
+            f.close()
+
+    def process(self):
+        # Processes multiple passes if file with metadata is being processed or just once for no metadata
+        result = ""
+        if 'filepath' in self.args:
+            contents = self.args['filepath'].get_contents()
+            factory = self.catcher.type_factory('ns0')
+            for item in contents:
+                metadatawrapper = factory.metadataWrapper()
+
+                metadata = []
+                for key, value in item.items():
+                    metadata.append(factory.metadata(field=key, value=value))
+
+                metadatawrapper.metadataList = {'metadata': metadata}
+
+                result += getattr(self, self.function)(
+                    self.get_params(metadatawrapper))
+        else:
+            result = getattr(self, self.function)(self.get_params())
+
+        if not result == "":
+            if self.args["output"] is None:
+                print(result)
+            else:
+                self.output(result, self.args["output"])
 
     class FileProcessor(argparse.Action):
         ALLOWABLE_EXTENSIONS = ('json', 'xml')
