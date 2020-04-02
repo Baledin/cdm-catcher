@@ -71,12 +71,12 @@ def get_args():
 class Catcher:
     # Matches program argument with Catcher function:
     AVAILABLE_FUNCTIONS = {
-        'catalog': 'getCONTENTdmCatalog',
-        'collection': 'getCONTENTdmCollectionConfig',
-        'terms': 'getCONTENTdmControlledVocabTerms',
-        'add': 'processCONTENTdm',
-        'delete': 'processCONTENTdm',
-        'edit': 'processCONTENTdm'
+        'catalog': 'get_catalog',
+        'collection': 'get_config',
+        'terms': 'get_vocab',
+        'add': 'modify_record',
+        'delete': 'modify_record',
+        'edit': 'modify_record'
     }
 
     CATCHERURL = "https://worldcat.org/webservices/contentdm/catcher/6.0/CatcherService.wsdl"
@@ -100,33 +100,10 @@ class Catcher:
                     f.write("\n\n")
             f.close()
 
-    def get_params(self, metadata=None):
-        valid_actions = ['add', 'delete', 'edit']
-        params = {**self.config}
-        # Add line item arguments if provided
-        for key, value in self.args.items():
-            if(key == 'version') or (key == 'filepath'):
-                continue
-            elif (key == 'action') and not (value in valid_actions):
-                continue
-            elif (key == 'alias'):
-                # alias is known to Catcher by collection, ensure preceeding slash
-                alias = value
-                if not alias[0] == "/":
-                    alias = "/" + alias
-                params['collection'] = alias
-            else:
-                params[key] = value
-
-        if not metadata == None:
-            params['metadata'] = metadata
-
-        return params
-
     # def init_vocabulary():
-        # Get collection config and iterate, for each field with vocab set to 1, add to self.vocab as key
-        # config = self.getCONTENTdmCollectionConfig()
-        # TODO: Add controlled vocab for alt vocab if self.args.vocab == None:
+    # Get collection config and iterate, for each field with vocab set to 1, add to self.vocab as key
+    # config = self.getCONTENTdmCollectionConfig()
+    # TODO: Add controlled vocab for alt vocab if self.args.vocab == None:
 
     def process(self):
         # Processes multiple passes if file with metadata is being processed or just once for no metadata
@@ -154,7 +131,7 @@ class Catcher:
             else:
                 self.output(result, self.args["output"])
 
-    def getCONTENTdmCatalog(self, params):
+    def get_catalog(self, params):
         return self.catcher.service.getCONTENTdmCatalog(
             cdmurl=params['cdmurl'],
             username=params['username'],
@@ -162,7 +139,7 @@ class Catcher:
             license=params['license']
         )
 
-    def getCONTENTdmCollectionConfig(self, params):
+    def get_config(self, params):
         return self.catcher.service.getCONTENTdmCollectionConfig(
             cdmurl=params['cdmurl'],
             username=params['username'],
@@ -171,7 +148,32 @@ class Catcher:
             collection=params['collection']
         )
 
-    def getCONTENTdmControlledVocabTerms(self, params):
+    def get_params(self, metadata=None, limit=None, config=True):
+        valid_actions = ['add', 'delete', 'edit']
+        if config:
+            params = {**self.config}
+        # Add line item arguments if provided
+        for key, value in self.args.items():
+            if not limit is None and key in limit:
+                if(key == 'version') or (key == 'filepath'):
+                    continue
+                elif (key == 'action') and not (value in valid_actions):
+                    continue
+                elif (key == 'alias'):
+                    # alias is known to Catcher by collection, ensure preceeding slash
+                    alias = value
+                    if not alias[0] == "/":
+                        alias = "/" + alias
+                    params['collection'] = alias
+                else:
+                    params[key] = value
+
+            if not metadata == None:
+                params['metadata'] = metadata
+
+        return params
+
+    def get_vocab(self, params):
         return self.catcher.service.getCONTENTdmControlledVocabTerms(
             cdmurl=params['cdmurl'],
             username=params['username'],
@@ -181,7 +183,7 @@ class Catcher:
             field=params['field']
         )
 
-    def processCONTENTdm(self, params):
+    def modify_record(self, params):
         result = "******** " + str(datetime.now()) + " ********\n"
 
         result += self.catcher.service.processCONTENTdm(
