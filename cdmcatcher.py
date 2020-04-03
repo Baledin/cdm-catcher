@@ -156,27 +156,19 @@ class Catcher:
             if not field['vocab'] == '1':
                 vocab[field['nickname']] = {}
 
-        # Populate alternate vocab lists
+        # Populate alternate vocab lists if provided
         if 'vocab' in self.args:
             alias = self.args['vocab'].pop(0)
-            for alt_field in self.args['vocab']:
-                # replace defined vocab keys with vocab from provided argument
-                params = self.get_params(limit=['collection', 'field'])
-                params['collection'] = alias
-                params['field'] = alt_field
-                vocab[alt_field] = xmltodict.parse(self.get_vocab(params))[
-                    'terms']['term']
-
+            for field in self.args['vocab']:
+                self.set_vocab(alias, field)
         return vocab
 
     def is_valid(self, field, term):
         if field in self.vocab:
             # Initialize vocabulary if empty
             if not bool(self.vocab[field]):
-                params = self.get_params(limit=['collection', 'field'])
-                params['field'] = field
-                self.vocab[field] = self.get_vocab(params)
-
+                self.set_vocab(self.args['collection'], field)
+                
             # Check term exists in vocabulary
             if term in self.vocab[field]:
                 return True
@@ -230,6 +222,23 @@ class Catcher:
                 print(result)
             else:
                 self.output(result, self.args["output"])
+
+    def set_vocab(self, alias, field):
+        params = self.get_params(limit=['collection', 'field'])
+        params['collection'] = alias
+        params['field'] = field
+        vocab_result = self.get_vocab(params)
+
+        try:
+            self.vocab[field] = xmltodict.parse(vocab_result)['terms']['term']
+        except:
+            while True:
+                print("Controlled vocabulary for " + alias + "/" + field + " does not exist. Continue without checking controlled vocabulary (y/n)?")
+                cont = input()
+                if cont.lower() == "y":
+                    break
+                elif cont.lower() == "n":
+                    quit("Exiting, please check alias and field are correct.")
 
     class FileProcessor(argparse.Action):
         ALLOWABLE_EXTENSIONS = ('json', 'xml')
@@ -295,7 +304,3 @@ if __name__ == "__main__":
 
     # Initialize
     catcher.process()
-
-    # For testing
-    catcher.init_vocabulary()
-    print(catcher.is_valid("subjec", "zzTop"))
