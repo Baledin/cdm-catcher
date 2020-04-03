@@ -16,3 +16,7 @@ Rename `config-dist.py` to `config.py` and update contents with the following:
 - processCONTENTdm add/edit are not performing as expected. Delete command works as intended and removes the resultant record from CONTENTdm after re-indexing
 - Provide samples input files
 - Flesh out README with command-line argument details
+
+## Known Issues
+
+- A known issue with Catcher (not cdm-catcher), when editing a record that includes a controlled vocabulary field and has either an apostrophe (&) or single-quote ('), the edit will claim success but will not actually edit the record. Until the bug is fixed on Catcher, you must turn off Controlled Vocabulary for the field in question until edits are completed.
