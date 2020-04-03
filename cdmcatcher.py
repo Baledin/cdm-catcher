@@ -1,9 +1,10 @@
 import argparse
 from datetime import datetime
 import json
-import lxml.etree as xTree
+import lxml.etree as et
 import os
-import pprint
+import re
+import xmltodict
 import zeep
 
 
@@ -84,10 +85,11 @@ class Catcher:
     def __init__(self, config, args):
         self.config = config
         self.args = vars(args)
-        self.settings = zeep.Settings(strict=False)
-        self.catcher = zeep.Client(Catcher.CATCHERURL, settings=self.settings)
+        self.catcher = zeep.Client(Catcher.CATCHERURL)
         self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
-        self.vocab = {}
+
+        if not self.function == "get_catalog":
+            self.vocab = self.init_vocabulary()
 
         if(self.args['version']):
             print("Catcher version: " + self.catcher.service.getWSVersion())
@@ -115,7 +117,7 @@ class Catcher:
             params = {**self.config}
         # Add line item arguments if provided
         for key, value in self.args.items():
-            if not limit is None and key in limit:
+            if limit is None or key in limit:
                 if(key == 'version') or (key == 'filepath'):
                     continue
                 elif (key == 'action') and not (value in valid_actions):
@@ -144,10 +146,43 @@ class Catcher:
             field=params['field']
         )
 
-    # def init_vocabulary():
-    # Get collection config and iterate, for each field with vocab set to 1, add to self.vocab as key
-    # config = self.getCONTENTdmCollectionConfig()
-    # TODO: Add controlled vocab for alt vocab if self.args.vocab == None:
+    def init_vocabulary(self):
+        vocab = {}
+        config_params = self.get_params(limit=['alias'])
+        config_response = self.get_config(config_params)
+        fields = xmltodict.parse(config_response)
+
+        for field in fields['fields']['field']:
+            if not field['vocab'] == '1':
+                vocab[field['nickname']] = {}
+
+        # Populate alternate vocab lists
+        if 'vocab' in self.args:
+            alias = self.args['vocab'].pop(0)
+            for alt_field in self.args['vocab']:
+                # replace defined vocab keys with vocab from provided argument
+                params = self.get_params(limit=['collection', 'field'])
+                params['collection'] = alias
+                params['field'] = alt_field
+                vocab[alt_field] = xmltodict.parse(self.get_vocab(params))[
+                    'terms']['term']
+
+        return vocab
+
+    def is_valid(self, field, term):
+        if field in self.vocab:
+            # Initialize vocabulary if empty
+            if not bool(self.vocab[field]):
+                params = self.get_params(limit=['collection', 'field'])
+                params['field'] = field
+                self.vocab[field] = self.get_vocab(params)
+
+            # Check term exists in vocabulary
+            if term in self.vocab[field]:
+                return True
+            else:
+                return False
+        return True
 
     def modify_record(self, params):
         result = "******** " + str(datetime.now()) + " ********\n"
@@ -229,7 +264,7 @@ class Catcher:
 
         def parse_xml(self, filepath):
             # Parses xml, returns list of dictionaries
-            xml = xTree.parse(filepath).getroot()
+            xml = et.parse(filepath).getroot()
             result = []
             for record in xml:
                 # Check for valid xml structure
@@ -256,4 +291,11 @@ if __name__ == "__main__":
         'license': cdm['license'],
     }
     args = get_args()
-    Catcher(config, args).process()
+    catcher = Catcher(config, args)
+
+    # Initialize
+    catcher.process()
+
+    # For testing
+    catcher.init_vocabulary()
+    print(catcher.is_valid("subjec", "zzTop"))
