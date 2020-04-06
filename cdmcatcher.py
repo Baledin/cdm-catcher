@@ -207,13 +207,19 @@ class Catcher:
                 metadatawrapper = factory.metadataWrapper()
 
                 metadata = []
-                for key, value in item.items():
-                    metadata.append(factory.metadata(field=key, value=value))
+                invalid_metadata = []
+                for field, value in item.items():
+                    if self.is_valid(field, value):
+                        metadata.append(factory.metadata(field=field, value=value))
+                    else:
+                        invalid_metadata.append({field : value})
 
-                metadatawrapper.metadataList = {'metadata': metadata}
-
-                result += getattr(self, self.function)(
-                    self.get_params(metadatawrapper))
+                if len(invalid_metadata) > 0:
+                    for field, value in invalid_metadata:
+                        result += "Warning: " + str(value) + " does not conform to controlled vocabulary for field " + str(field) + ". Entry skipped."
+                else:
+                    metadatawrapper.metadataList = {'metadata': metadata}
+                    result += getattr(self, self.function)(self.get_params(metadatawrapper))
         else:
             result = getattr(self, self.function)(self.get_params())
 
