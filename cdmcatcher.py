@@ -89,7 +89,7 @@ class Catcher:
         self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
 
         if not self.function == "get_catalog":
-            self.vocab = self.init_vocabulary()
+            self.init_vocabulary()
 
         if(self.args['version']):
             print("Catcher version: " + self.catcher.service.getWSVersion())
@@ -147,34 +147,20 @@ class Catcher:
         )
 
     def init_vocabulary(self):
-        vocab = {}
+        self.vocab = {}
         config_params = self.get_params(limit=['alias'])
         config_response = self.get_config(config_params)
         fields = xmltodict.parse(config_response)
 
         for field in fields['fields']['field']:
-            if not field['vocab'] == '1':
-                vocab[field['nickname']] = {}
+            if field['vocab'] == '1':
+                self.vocab[field['nickname']] = []
 
         # Populate alternate vocab lists if provided
         if 'vocab' in self.args:
-            alias = self.args['vocab'].pop(0)
+            alias = ("/" + self.args['vocab'].pop(0)).replace("//", "/")
             for field in self.args['vocab']:
                 self.set_vocab(alias, field)
-        return vocab
-
-    def is_valid(self, field, term):
-        if field in self.vocab:
-            # Initialize vocabulary if empty
-            if not bool(self.vocab[field]):
-                self.set_vocab(self.args['collection'], field)
-                
-            # Check term exists in vocabulary
-            if term in self.vocab[field]:
-                return True
-            else:
-                return False
-        return True
 
     def modify_record(self, params):
         result = "******** " + str(datetime.now()) + " ********\n"
@@ -188,7 +174,7 @@ class Catcher:
             collection=params['collection'],
             metadata=params['metadata']
         )
-        result += "\n"
+        result += "\n\n"
         return result
 
     def output(self, body, filename='output.xml', mode="w"):
@@ -203,20 +189,21 @@ class Catcher:
         if 'filepath' in self.args:
             contents = self.args['filepath'].get_contents()
             factory = self.catcher.type_factory('ns0')
-            for item in contents:
+            for record in contents:
                 metadatawrapper = factory.metadataWrapper()
 
                 metadata = []
-                invalid_metadata = []
-                for field, value in item.items():
-                    if self.is_valid(field, value):
-                        metadata.append(factory.metadata(field=field, value=value))
-                    else:
-                        invalid_metadata.append({field : value})
+                invalid_metadata = {}
+                for field, value in record.items():
+                    invalid_terms = self.validate_terms(field, value.split(';'))
+                    if len(invalid_terms) > 0:
+                        invalid_metadata[field] = invalid_terms
+                    metadata.append(factory.metadata(field=field, value=value))
 
                 if len(invalid_metadata) > 0:
-                    for field, value in invalid_metadata:
-                        result += "Warning: " + str(value) + " does not conform to controlled vocabulary for field " + str(field) + ". Entry skipped."
+                    for field, value in invalid_metadata.items():
+                        result += "******** " + str(datetime.now()) + " ********\n"
+                        result += "Warning: " + str(value) + " does not conform to controlled vocabulary for field " + str(field) + ". Record skipped.\n"
                 else:
                     metadatawrapper.metadataList = {'metadata': metadata}
                     result += getattr(self, self.function)(self.get_params(metadatawrapper))
@@ -236,8 +223,10 @@ class Catcher:
         vocab_result = self.get_vocab(params)
 
         try:
-            self.vocab[field] = xmltodict.parse(vocab_result)['terms']['term']
+            vocab_dict = xmltodict.parse(vocab_result)
+            self.vocab[field] = vocab_dict['terms']['term']
         except:
+            breakpoint()
             while True:
                 print("Controlled vocabulary for " + alias + "/" + field + " does not exist. Continue without checking controlled vocabulary (y/n)?")
                 cont = input()
@@ -245,6 +234,21 @@ class Catcher:
                     break
                 elif cont.lower() == "n":
                     quit("Exiting, please check alias and field are correct.")
+
+    def validate_terms(self, field, terms):
+        # Validates controlled vocabulary terms, returns empty list for all valid
+        invalid_terms = []
+        if field in self.vocab:
+            # Initialize vocabulary if empty
+            if not bool(self.vocab[field]):
+                self.set_vocab(self.args['alias'], field)
+            
+            # Check term exists in vocabulary
+            for term in terms:
+                term = term.strip()
+                if not term in self.vocab[field]:
+                    invalid_terms.append(term)
+        return invalid_terms
 
     class FileProcessor(argparse.Action):
         ALLOWABLE_EXTENSIONS = ('json', 'xml')
