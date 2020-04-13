@@ -87,7 +87,7 @@ class Catcher:
         self.args = vars(args)
         self.catcher = zeep.Client(Catcher.CATCHERURL)
         self.function = Catcher.AVAILABLE_FUNCTIONS[self.args['action']]
-
+        
         if not self.function == "get_catalog":
             self.init_vocabulary()
 
@@ -157,7 +157,7 @@ class Catcher:
                 self.vocab[field['nickname']] = []
 
         # Populate alternate vocab lists if provided
-        if 'vocab' in self.args:
+        if 'vocab' in self.args and not self.args['vocab'] is None:
             alias = ("/" + self.args['vocab'].pop(0)).replace("//", "/")
             for field in self.args['vocab']:
                 self.set_vocab(alias, field)
@@ -198,7 +198,15 @@ class Catcher:
                     invalid_terms = self.validate_terms(field, value.split(';'))
                     if len(invalid_terms) > 0:
                         invalid_metadata[field] = invalid_terms
-                    metadata.append(factory.metadata(field=field, value=value))
+                    data = factory.metadata(field=field, value=value)
+                    
+                    # If field is dmrecord or title, move to top of list as appopriate
+                    if field == 'dmrecord' and self.args['action'] in ['edit', 'delete']:
+                        metadata.insert(0, data)
+                    elif field == 'title' and self.args['action'] in ['add']:
+                        metadata.insert(0, data)
+                    else:
+                        metadata.append(data)
 
                 if len(invalid_metadata) > 0:
                     for field, value in invalid_metadata.items():
