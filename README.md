@@ -15,7 +15,10 @@ Rename `config-dist.py` to `config.py` and update contents with the following:
 
 - Provide samples input files
 - Flesh out README with command-line argument details
+- Add comments to codebase for ease of maintenance
 
-## Known Issues
+## Tips and Known Issues
 
-- A known issue with Catcher (not cdm-catcher), when editing a record that includes a controlled vocabulary field and has either an apostrophe (&) or single-quote ('), the edit will claim success but will not actually edit the record. Until the bug is fixed on Catcher, you must turn off Controlled Vocabulary for the field in question until edits are completed.
+- When editing a record that includes a controlled vocabulary field (whether the field in question is being edited or not) and has either an apostrophe (&) or single-quote (') in the controlled vocabulary terms for that field, the edit will claim success but will not actually edit the record. Until the bug is fixed in Catcher, you must turn off Controlled Vocabulary for the field(s) in question until edits are completed.
+- Ensure valid XML when submitting to Catcher--invalid XML will throw parsing errors. Numerous online validators (such as https://www.xmlvalidation.com/) exist to test your file before submitting.
+- When exporting from CONTENTdm, select the Combine option for repeating and controlled vocabulary fields.
