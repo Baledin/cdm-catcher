@@ -13,11 +13,10 @@ def get_args():
         description="%(prog)s is a python helper script for interacting with the CONTENTdm Catcher SOAP service.")
 
     # General arguments
-    # TODO Add additional version calls to string
     parser.add_argument("-v", "--version", action='store_true',
-                        help="Returns current %(prog)s, Catcher, and HTTP Transfer versions.")
+                        help="Returns current %(prog)s Catcher version.")
     parser.add_argument(
-        "-o", "--output", help="Filename and path for output.")
+        "--output", help="Filename and path for output. Default output is to screen.")
 
     # Subparsers
     subparsers = parser.add_subparsers(dest="action")
@@ -30,37 +29,37 @@ def get_args():
     collection_parser = subparsers.add_parser(
         "collection", help="Return the collection fields and their attributes")
     collection_parser.add_argument(
-        "alias", help="The alias of the collection configuration you want returned.")
+        "alias", help="The alias of the collection configuration to return.")
 
     # Add parser
-    process_add_parser = subparsers.add_parser("add", help="Add metadata.")
+    process_add_parser = subparsers.add_parser("add", help="Add records to collection.")
     process_add_parser.add_argument(
         "alias", help="The alias of the collection to modify.")
     process_add_parser.add_argument(
         "filepath", action=Catcher.FileProcessor, help="XML or JSON filepath with metadata to add.")
     process_add_parser.add_argument(
-        "-cv", "--vocab", help="Allows the provision of an alternate alias and matching controlled vocabulary for X fields. Used for validating controlled vocabulary fields where the controlled vocabulary has been temporarily disabled.", nargs="+")
+        "-cv", "--vocab", help="Allows the provision of an alternate alias and matching controlled vocabulary for X fields. Used for validating controlled vocabulary fields where the controlled vocabulary has been temporarily disabled.  Specify alternate alias and fields to validate, separated by spaces (i.e. `test_collection field1 field2 field3`).", nargs="+")
 
     # Delete parser
     process_delete_parser = subparsers.add_parser(
-        "delete", help="Add metadata.")
+        "delete", help="Delete records from collection.")
     process_delete_parser.add_argument(
         "alias", help="The alias of the collection to modify.")
     process_delete_parser.add_argument(
         "filepath", action=Catcher.FileProcessor, help="XML or JSON filepath with metadata to delete.")
 
     # Edit parser
-    process_edit_parser = subparsers.add_parser("edit", help="Add metadata.")
+    process_edit_parser = subparsers.add_parser("edit", help="Edit metadata for records currently existing in a collection.")
     process_edit_parser.add_argument(
         "alias", help="The alias of the collection to modify.")
     process_edit_parser.add_argument("filepath", action=Catcher.FileProcessor,
                                      help="XML or JSON filepath with metadata transformations to apply.")
     process_edit_parser.add_argument(
-        "-cv", "--vocab", help="Allows the provision of an alternate alias and matching controlled vocabulary for X fields. Used for validating controlled vocabulary fields where the controlled vocabulary has been temporarily disabled.", nargs="+")
+        "-cv", "--vocab", help="Allows the provision of an alternate alias and matching controlled vocabulary for X fields. Used for validating controlled vocabulary fields where the controlled vocabulary has been temporarily disabled.  Specify alternate alias and fields to validate, separated by spaces (i.e. `test_collection field1 field2 field3`).", nargs="+")
 
     # Vocabulary parser
     vocab_parser = subparsers.add_parser(
-        "terms", help="Return controlled vocabulary terms for selected collection.")
+        "terms", help="Returns controlled vocabulary terms for indicated collection and field.")
     vocab_parser.add_argument(
         "alias", help="The alias of the collection to return.")
     vocab_parser.add_argument(
