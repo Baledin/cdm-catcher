@@ -21,7 +21,7 @@ cdm-catcher can be used from the command line by typing `python cdmcatcher.py [g
 
 ### General arguments
 
-| Flag | Command     | Comments                                                         |
+| Flag | Argument    | Comments                                                         |
 | :--: | ----------- | ---------------------------------------------------------------- |
 | `-h` | `--help`    | Prints the help documentation for CONTENTdm-Catcher              |
 | `-v` | `--version` | prints the current OCLC Catcher version being used by the script |
@@ -33,32 +33,32 @@ cdm-catcher can be used from the command line by typing `python cdmcatcher.py [g
 
 Output a list of collections from a CONTENTdm Server. Use `python cdmcatcher.py catalog`.
 
-| Flag | Command | Comments                |
-| :--: | ------- | ----------------------- |
-|      |         | No additional arguments |
+| Flag | Argument | Comments                |
+| :--: | -------- | ----------------------- |
+|      |          | No additional arguments |
 
 #### Collection action
 
 Output the collection fields and their attributes (XML). Use `python cdmcatcher.py collection [alias]`.
 
-| Flag | Command | Comments                                             |
-| :--: | ------- | ---------------------------------------------------- |
-|      | `alias` | The alias of the collection configuration to return. |
+| Flag | Argument | Comments                                             |
+| :--: | -------- | ---------------------------------------------------- |
+|      | `alias`  | The alias of the collection configuration to return. |
 
 #### Terms action
 
 Output controlled vocabulary terms for indicated collection and field (XML). Use `python cdmcatcher.py terms [alias] [field]`.
 
-| Flag | Command | Comments                                            |
-| :--: | ------- | --------------------------------------------------- |
-|      | `alias` | The alias of the collection to return.              |
-|      | `field` | The field with the controlled vocabulary to return. |
+| Flag | Argument | Comments                                            |
+| :--: | -------- | --------------------------------------------------- |
+|      | `alias`  | The alias of the collection to return.              |
+|      | `field`  | The field with the controlled vocabulary to return. |
 
 #### Add action
 
 Add records to collection. Use `python cdmcatcher.py add [alias] [filepath] [optional arguments]`.
 
-| Flag | Command    | Comments                                                                                                                                                                                                                                                                                                                                                        |
+| Flag | Argument   | Comments                                                                                                                                                                                                                                                                                                                                                        |
 | :--: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |      | `alias`    | The alias of the collection to modify.                                                                                                                                                                                                                                                                                                                          |
 |      | `filepath` | XML or JSON filepath with metadata to add.                                                                                                                                                                                                                                                                                                                      |
@@ -68,7 +68,7 @@ Add records to collection. Use `python cdmcatcher.py add [alias] [filepath] [opt
 
 Delete records from collection. Use `python cdmcatcher.py delete [alias] [filepath]`.
 
-| Flag | Command    | Comments                                      |
+| Flag | Argument   | Comments                                      |
 | :--: | ---------- | --------------------------------------------- |
 |      | `alias`    | The alias of the collection to modify.        |
 |      | `filepath` | XML or JSON filepath with metadata to delete. |
@@ -77,7 +77,7 @@ Delete records from collection. Use `python cdmcatcher.py delete [alias] [filepa
 
 Edit metadata for records currently existing in a collection. Use `python cdmcatcher.py edit [alias] [filepath] [optional arguments]`.
 
-| Flag | Command    | Comments                                                                                                                                                                                                                                                                                                                                                        |
+| Flag | Argument   | Comments                                                                                                                                                                                                                                                                                                                                                        |
 | :--: | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |      | `alias`    | The alias of the collection to modify.                                                                                                                                                                                                                                                                                                                          |
 |      | `filepath` | XML or JSON filepath with metadata to edit.                                                                                                                                                                                                                                                                                                                     |
