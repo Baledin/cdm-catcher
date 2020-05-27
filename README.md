@@ -6,6 +6,9 @@ CONTENTdm-Catcher allows all primary functions of the Catcher service, including
 
 ## Use
 
+### Install
+Run `python -m pip install -r requirements.txt` from the project folder to install dependencies.
+
 ### Configure
 
 Rename `config-dist.py` to `config.py` and update contents with the following:
