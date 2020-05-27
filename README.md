@@ -144,6 +144,8 @@ Add/delete/edit calls require passing XML or JSON files to CONTENTdm-Catcher for
 - When editing a record that includes a controlled vocabulary field (whether the field in question is being edited or not) and has either an apostrophe (&) or single-quote (') in the controlled vocabulary terms for that field, the edit will claim success but will not actually edit the record. Until the bug is fixed in Catcher, you must turn off Controlled Vocabulary for the field(s) in question until edits are completed.
 - Ensure valid XML when submitting to Catcher--invalid XML will throw parsing errors. Numerous online validators (such as https://www.xmlvalidation.com/) exist to test your file before submitting.
 - When exporting from CONTENTdm, select the Combine option for repeating and controlled vocabulary fields.
+- When updating Page AND Item level content, be sure to update Page level and index before updating item level content.
+- Use Nicknames when referring to fields in add or edit actions (i.e. "subjec" instead of "subject"). Use the Collection action to review nicknames for a collection.
 
 ## TO-DO
 
